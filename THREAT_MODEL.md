@@ -32,14 +32,15 @@ Steward is an agent that pays supplier invoices. This file lists what it defends
 | Insider or attacker with log access | Delete an entry | Detected | **tested** |
 | Insider or attacker with log access | Replace the log with one signed by another key | Detected | **tested** |
 | Someone linking the agent to the wrong account | Use a link proof made for another owner | Refused | **tested** |
-| Stolen agent key | Keep spending after the owner notices | Owner sends the revoke message, or closes the EVM window | messages **tested**; effect on chain **planned** (needs funded testnet run) |
+| Compromised agent | Pay more than the chain ceiling in one transaction | The chain records the execution as failed ("per-tx limit exceeded") and no money moves | **tested on testnet** (see README, Testnet run) |
+| Stolen agent key | Keep spending after the owner notices | Owner sends the revoke message, which switches the key off | revoke **ran on testnet**; payments after a revoke not separately tried |
 
 ## Not protected / known limits
 - **Currency:** limits cover native uqor only.
 - **Owner key:** if the owner's key is stolen, the attacker can sign any policy. Keep it offline.
 - **Daily totals:** the agent keeps its running total in memory; it resets if the process restarts. The chain's daily limit is the backstop.
 - **Approvals:** the owner is trusted to read what they sign. The page shows invoice, payee and amount.
-- **Payments are simulated** in the demo. Sending real payments through the linked key needs a funded testnet account and is not yet done.
+- **The browser demo simulates payments.** The on-chain script makes real testnet payments, but it does not run the decision engine first.
 - **Settlement through Rail** has not been confirmed for linked keys.
 - **Testnet:** all keys and funds are test-only.
 

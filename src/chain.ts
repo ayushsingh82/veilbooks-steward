@@ -34,7 +34,7 @@ export function linkAgentMessages(owner: string, proof: AuthenticatorLinkProof, 
     scheme: proof.scheme,
     pubkey: proof.pubkey,
     possessionProof: proof.possessionProof,
-    permissions: ["evm"],
+    permissions: ["send"],
     expiryUnix: BigInt(p.expiresUnix),
     label,
     spendingRules: [

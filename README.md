@@ -48,7 +48,7 @@ npm run dev       # browser demo of the agent, approval queue and signed log
 
 ## Status and limits
 
-- The agent logic is built and tested offline. Sending the link transaction and the agent's payments to the testnet needs a funded owner account and is not yet done.
+- The agent logic is built and tested offline, and the on-chain path has run on the QoreChain testnet with `scripts/onchain.ts`: the owner linked the agent key (permission `send`, spending rule 20 QOR per transaction and 40 QOR per day), the agent made a 1 QOR payment, and the chain refused a 25 QOR payment because it passes the per-transaction limit. The agent's own decision engine is not in that script yet: the demo script pays what it is told, so the chain ceiling is what it proves.
 - A browser demo is in `web/` (`npm run dev`). It runs the real policy, decisions, approvals and signed log with a simulated payer, so no funds move.
 - It pays suppliers directly through the linked key. Settling through Veilbooks Rail has not been confirmed for linked keys.
 - The limits cover native uqor only.
@@ -67,3 +67,15 @@ Veilbooks keeps business payment amounts private, with signatures and encryption
 ## Licence and AI use
 
 Apache-2.0. See [AI_USAGE.md](AI_USAGE.md) for how AI tools were used.
+
+## Testnet run
+
+| Step | Result | Transaction |
+| --- | --- | --- |
+| Link agent key, `send` only, limits 20 / 40 QOR | linked | `FDF0EA725C854DD55721F6E5D2725B42A33AC792849437176FB5C802969E907D` |
+| Agent pays 1 QOR | paid | `6A1275B88D0C5F4267D468B72491B481A642981FCA1548F1F9E95B7588B1CFF2` |
+| Agent tries 25 QOR | refused by the chain: per-tx limit 20000000uqor exceeded | `FAE3A5DC489DEF2F308D693FF22DC40AC823EF26D826F6E442A187342CE77C27` |
+
+A refused execution still lands as a successful transaction. The refusal is an `abstractaccount_execution_failed` event on it, which the script reads. The spending rule is stored on the owner's account and the chain applies it to the linked key's payments.
+
+Run it yourself: `npx tsx scripts/onchain.ts link | pay <qor1 payee> <uqor> | status | revoke`. It needs an operator env file (path in `OPERATOR_ENV`).
