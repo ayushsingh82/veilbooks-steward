@@ -22,6 +22,7 @@ Requires Node.js 20 or newer.
 npm install
 npm test          # policy, decisions, planner, approvals, log, chain link
 npm run typecheck
+npm run dev       # browser demo of the agent, approval queue and signed log
 ```
 
 ## How it works
@@ -41,11 +42,12 @@ npm run typecheck
 | `src/agent.ts` | Agent loop, approval queue, signed approvals |
 | `src/log.ts` | Signed, hash-chained decision log |
 | `src/chain.ts`, `src/chainRule.ts` | Key link, revoke and spending rule builders |
+| `web/` | Browser demo (Vite + React) |
 
 ## Status and limits
 
 - The agent logic is built and tested offline. Sending the link transaction and the agent's payments to the testnet needs a funded owner account and is not yet done.
-- There is no user interface yet.
+- A browser demo is in `web/` (`npm run dev`). It runs the real policy, decisions, approvals and signed log with a simulated payer, so no funds move.
 - It pays suppliers directly through the linked key. Settling through Veilbooks Rail has not been confirmed for linked keys.
 - The limits cover native uqor only.
 

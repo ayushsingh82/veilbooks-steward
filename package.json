@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p web/tsconfig.json",
+    "dev": "vite --config web/vite.config.ts",
+    "build": "vite build --config web/vite.config.ts"
   },
   "repository": {
     "type": "git",
@@ -27,11 +29,17 @@
     "@qorechain/qoresign": "^0.2.0",
     "@qorechain/rdk": "^0.9.0",
     "@qorechain/sdk": "^0.14.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "viem": "^2.58.8"
   },
   "devDependencies": {
     "@types/node": "^26.6.11",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
     "typescript": "^7.0.2",
+    "vite": "^8.4.0",
     "vitest": "^5.1.2"
   }
 }
