@@ -11,7 +11,8 @@ This project is part of Veilbooks, built for the QoreChain "Build Before Q-Day" 
 
 ## What the human did
 - Chose the idea, the tracks and the project structure.
-- Created the accounts, repositories, project pages and testnet keys, and kept all private keys out of the AI's reach.
+- Created the accounts, repositories, project pages and testnet keys, and funded the testnet operator account.
+- Kept the operator key in a git-ignored env file on their own machine. The AI ran scripts that read that file to sign testnet transactions, but never printed, copied or committed the key.
 - Reviewed, ran and decided on all AI-written code before committing it.
 
 ## Limits and honesty notes
