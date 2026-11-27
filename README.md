@@ -44,6 +44,7 @@ npm run dev       # browser demo of the agent, approval queue and signed log
 | `src/log.ts` | Signed, hash-chained decision log |
 | `src/chain.ts`, `src/chainRule.ts` | Key link, revoke and spending rule builders |
 | `web/` | Browser demo (Vite + React) |
+| `THREAT_MODEL.md` | Attackers, what stops them, and what is not covered |
 
 ## Status and limits
 
