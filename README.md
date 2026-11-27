@@ -2,37 +2,64 @@
 
 > An agent that pays your invoices and can't go over your limits.
 
-Part of Veilbooks: business payments with the amounts veiled, safe from quantum attacks.
+Veilbooks Steward is an accounts-payable agent that pays supplier invoices within limits its owner has signed with a post-quantum key. The owner's limits are enforced twice: by the agent's decision engine and by a spending rule on the chain itself, so a compromised or misled agent still cannot move more than the owner allowed.
 
-An agent that pays sealed invoices inside limits the owner signed.
+## Features
 
-Entry in the QoreChain "Build Before Q-Day" developer fest, category: Post-Quantum AI Agents. Apache-2.0.
+- **Owner-signed policy** (ML-DSA-87): per-invoice, daily and per-supplier limits, an allowed-payee list and an expiry. Any change to the policy invalidates its signature.
+- **Two tiers of limits**: what the agent may pay alone, and a higher hard ceiling that the chain enforces on the agent's key.
+- **Decision engine** returning pay, escalate or reject. Free text from suppliers is never read as an instruction.
+- **Optional planner**: Claude when `ANTHROPIC_API_KEY` is set, otherwise a deterministic rules planner. A planner can only order or hold invoices; it cannot raise a limit.
+- **Approval queue**: over-limit invoices wait for the owner, who approves or denies with a signature bound to the invoice, payee, amount and policy.
+- **Signed decision log**: every decision is appended to a hash-chained log signed with the agent's ML-DSA-87 key. Editing or deleting an entry is detected.
+- **Chain link adapter**: builds the owner-signed messages that link the agent's key to the owner's account with the spending rule, and the message that revokes it.
 
-_Work in progress._
+## Quick start
 
-## Status
-Work in progress for the QoreChain "Build Before Q-Day" developer fest (deadline 2 December 2026). Network: QoreChain testnet `qorechain-diana`.
+Requires Node.js 20 or newer.
 
-## The Veilbooks suite
-| Repo | Role | Category |
-|---|---|---|
-| [veilbooks-rail](https://github.com/ayushsingh82/veilbooks-rail) | Settlement rollup | Protocol Builders |
-| [veilbooks-desk](https://github.com/ayushsingh82/veilbooks-desk) | Sealed invoices and payroll app | Encrypted Apps |
-| [veilbooks-steward](https://github.com/ayushsingh82/veilbooks-steward) | Agent that pays within signed limits | Post-Quantum AI Agents |
-| [veilbooks-core](https://github.com/ayushsingh82/veilbooks-core) | Shared library | not entered |
+```sh
+npm install
+npm test          # policy, decisions, planner, approvals, log, chain link
+npm run typecheck
+```
 
 ## How it works
-An agent opens sealed invoices, checks them against limits the owner signed with ML-DSA, and pays through Veilbooks Rail. Anything over a limit waits for the owner's approval.
 
-## Licence
-Apache-2.0. AI use is documented in [AI_USAGE.md](AI_USAGE.md).
+1. The owner signs a **policy** and links the agent's classical key to their account with a spending rule set to the hard ceilings.
+2. The agent receives invoices, asks the **planner** for an order, then runs each through the **decision engine**.
+3. Invoices inside the limits are paid. Others go to the **approval queue** or are rejected, and each outcome is written to the **log**.
+4. The owner approves an escalated invoice with an ML-DSA-87 signature. The chain ceiling still applies after approval.
 
-## Design in one screen
-- The **owner** signs a policy with ML-DSA-87: per-invoice and daily limits the agent may use alone, plus hard ceilings the chain enforces on the agent's key.
-- The **agent** holds only a classical key, linked to the owner's account by an owner-signed transaction (`src/chain.ts`). It cannot raise its own limits.
-- A **planner** (Claude if `ANTHROPIC_API_KEY` is set, otherwise rules) may only order or hold invoices. `decide()` and the chain have the last word. Invoice text is treated as data, never as instructions.
-- Over-limit invoices wait in an **approval queue**. The owner approves or denies with an ML-DSA-87 signature bound to the invoice, payee, amount and policy.
-- Every decision goes into a **hash-chained log signed by the agent**.
+## Repository layout
 
-## Status
-Offline logic is built and tested (`npm test`, 35 tests). Not done: sending the link transaction and agent calls to the testnet (needs a funded owner account), and the UI.
+| Path | Contents |
+| --- | --- |
+| `src/policy.ts` | Policy, owner signature and verification |
+| `src/decide.ts` | Decision engine |
+| `src/planner.ts` | Rules planner and optional Claude planner |
+| `src/agent.ts` | Agent loop, approval queue, signed approvals |
+| `src/log.ts` | Signed, hash-chained decision log |
+| `src/chain.ts`, `src/chainRule.ts` | Key link, revoke and spending rule builders |
+
+## Status and limits
+
+- The agent logic is built and tested offline. Sending the link transaction and the agent's payments to the testnet needs a funded owner account and is not yet done.
+- There is no user interface yet.
+- It pays suppliers directly through the linked key. Settling through Veilbooks Rail has not been confirmed for linked keys.
+- The limits cover native uqor only.
+
+## The Veilbooks suite
+
+| Repository | Role |
+| --- | --- |
+| [veilbooks-rail](https://github.com/ayushsingh82/veilbooks-rail) | Settlement rollup for private business payments |
+| [veilbooks-desk](https://github.com/ayushsingh82/veilbooks-desk) | Sealed invoices and payroll for people and auditors |
+| [veilbooks-steward](https://github.com/ayushsingh82/veilbooks-steward) | Agent that pays invoices within limits the owner signed |
+| [veilbooks-core](https://github.com/ayushsingh82/veilbooks-core) | Shared library: sealing, commitments, key registration |
+
+Veilbooks keeps business payment amounts private, with signatures and encryption designed to remain secure against quantum attacks. It runs on the QoreChain testnet (`qorechain-diana`).
+
+## Licence and AI use
+
+Apache-2.0. See [AI_USAGE.md](AI_USAGE.md) for how AI tools were used.
