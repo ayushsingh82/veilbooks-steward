@@ -10,7 +10,7 @@ const A = "qor1" + "a".repeat(38);
 const B = "qor1" + "b".repeat(38);
 const NOW = 1_800_000_000;
 
-const policy: Policy = { version: 1, ownerPublicKeyHex: ownerPk, perInvoiceUqor: "5000000", dailyUqor: "8000000", perSupplierDailyUqor: "6000000", allowedPayees: [A, B], expiresUnix: NOW + 86400 };
+const policy: Policy = { version: 1, ownerPublicKeyHex: ownerPk, perInvoiceUqor: "5000000", dailyUqor: "8000000", hardPerInvoiceUqor: "20000000", hardDailyUqor: "40000000", perSupplierDailyUqor: "6000000", allowedPayees: [A, B], expiresUnix: NOW + 86400 };
 const fresh = (): Spent => ({ today: 0n, todayByPayee: {}, paid: new Set() });
 const inv = (o: Partial<InvoiceToPay> = {}): InvoiceToPay => ({ id: "i1", payee: A, amountUqor: "1000000", ...o });
 
@@ -43,6 +43,7 @@ describe("decide", () => {
     const s = { ...fresh(), today: 5_500_000n, todayByPayee: { [A]: 5_500_000n } };
     expect(decide(inv({ amountUqor: "1000000" }), policy, s).action).toBe("escalate");
   });
+  it("rejects an amount above the chain ceiling", () => expect(decide(inv({ amountUqor: "20000001" }), policy, fresh()).action).toBe("reject"));
   it("rejects an unlisted payee", () => expect(decide(inv({ payee: "qor1" + "z".repeat(38) }), policy, fresh()).action).toBe("reject"));
   it("rejects a duplicate invoice", () => {
     const s = fresh();
@@ -86,8 +87,8 @@ describe("decision log", () => {
 describe("chain rule", () => {
   it("mirrors the policy limits and passes the SDK's own validation", () => {
     const r = chainRuleFor(policy);
-    expect(r.perTxLimit).toBe("5000000");
-    expect(r.dailyLimit).toBe("8000000");
+    expect(r.perTxLimit).toBe("20000000");
+    expect(r.dailyLimit).toBe("40000000");
     expect(r.allowedDenoms).toEqual(["uqor"]);
   });
 });

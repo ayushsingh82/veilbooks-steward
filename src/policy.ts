@@ -5,8 +5,12 @@ import { pqSign, pqVerify } from "@qorechain/qoresign";
 export interface Policy {
   version: 1;
   ownerPublicKeyHex: string;
+  /** What the agent may pay by itself. */
   perInvoiceUqor: string;
   dailyUqor: string;
+  /** Hard ceilings the chain enforces on the agent's key. Owner-approved payments may use room up to these. Must be >= the limits above. */
+  hardPerInvoiceUqor: string;
+  hardDailyUqor: string;
   perSupplierDailyUqor: string;
   /** Empty means any supplier. Otherwise only these qor1 addresses may be paid. */
   allowedPayees: string[];

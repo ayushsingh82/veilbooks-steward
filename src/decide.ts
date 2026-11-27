@@ -32,6 +32,8 @@ export function decide(inv: InvoiceToPay, p: Policy, spent: Spent): Decision {
   if (p.allowedPayees.length > 0 && !p.allowedPayees.includes(inv.payee)) return { action: "reject", reasons: ["payee is not on the allowed list"] };
 
   const amt = BigInt(inv.amountUqor);
+  if (amt > BigInt(p.hardPerInvoiceUqor)) return { action: "reject", reasons: [`above the chain ceiling (${p.hardPerInvoiceUqor}); the chain would refuse it`] };
+  if (spent.today + amt > BigInt(p.hardDailyUqor)) return { action: "reject", reasons: [`would pass the chain daily ceiling (${p.hardDailyUqor})`] };
   const over: string[] = [];
   if (amt > BigInt(p.perInvoiceUqor)) over.push(`over the per-invoice limit (${p.perInvoiceUqor})`);
   if (spent.today + amt > BigInt(p.dailyUqor)) over.push(`would pass the daily limit (${p.dailyUqor})`);
