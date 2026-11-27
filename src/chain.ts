@@ -1,6 +1,9 @@
 import type { EncodeObject } from "@cosmjs/proto-signing";
 import {
+  checkOpenEvmWindowScope,
+  closeEvmWindowMsg,
   linkAuthenticatorMsgs,
+  openEvmWindowMsg,
   revokeAuthenticatorMsg,
   signAuthenticatorLinkEip191,
   verifyAuthenticatorLinkProof,
@@ -51,4 +54,25 @@ export function linkAgentMessages(owner: string, proof: AuthenticatorLinkProof, 
 /** The owner's message that switches the agent key off at once. */
 export function revokeAgentMessage(owner: string, agentAddress: Address): EncodeObject {
   return revokeAuthenticatorMsg({ owner, scheme: "secp256k1", pubkey: hexToBytes(getAddress(agentAddress)) });
+}
+
+/**
+ * A narrow EVM authorisation window for the agent's payments: native QOR transfers only (no calldata, no contract
+ * creation), a small number of transactions, and a total capped at the policy's hard daily ceiling. The scope fields
+ * stay empty, so staking, IBC and validator modules are denied by default. The owner opens it explicitly; the agent cannot.
+ */
+export function agentWindowMessage(owner: string, p: Policy, opts: { blocks?: number; maxTxs?: number } = {}): EncodeObject {
+  return openEvmWindowMsg({
+    sender: owner,
+    blocks: opts.blocks ?? 7200,
+    maxTxs: opts.maxTxs ?? 50,
+    maxValue: BigInt(p.hardDailyUqor),
+    nativeOnly: true,
+    ...checkOpenEvmWindowScope({}),
+  });
+}
+
+/** The owner's message that closes the window at once. */
+export function closeAgentWindowMessage(owner: string): EncodeObject {
+  return closeEvmWindowMsg(owner);
 }

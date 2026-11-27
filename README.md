@@ -13,6 +13,7 @@ Veilbooks Steward is an accounts-payable agent that pays supplier invoices withi
 - **Approval queue**: over-limit invoices wait for the owner, who approves or denies with a signature bound to the invoice, payee, amount and policy.
 - **Signed decision log**: every decision is appended to a hash-chained log signed with the agent's ML-DSA-87 key. Editing or deleting an entry is detected.
 - **Chain link adapter**: builds the owner-signed messages that link the agent's key to the owner's account with the spending rule, and the message that revokes it.
+- **Scoped EVM window**: an owner-opened, native-transfer-only window (bounded blocks, transactions and total value, no staking or IBC scope) and the message that closes it.
 
 ## Quick start
 

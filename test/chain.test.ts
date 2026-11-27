@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { agentLinkProof, linkAgentMessages, revokeAgentMessage, type Policy } from "../src/index";
+import { agentLinkProof, agentWindowMessage, closeAgentWindowMessage, linkAgentMessages, revokeAgentMessage, type Policy } from "../src/index";
 
 const OWNER = "qor10fymynds2l93n07cnhkqqjggmavqzvrk6clclh";
 const OTHER = "qor1wzazq8gtxnuhq9mj5x6h5phenvvmxe8c0jwdyc";
@@ -17,5 +17,20 @@ describe("agent link", () => {
   });
   it("builds a revoke message", () => {
     expect(revokeAgentMessage(OWNER, privateKeyToAccount(pk).address).typeUrl).toMatch(/Authenticator/i);
+  });
+});
+
+describe("scoped EVM window", () => {
+  it("opens a native-only window capped at the hard daily ceiling", () => {
+    const m = agentWindowMessage(OWNER, policy) as { typeUrl: string; value: Record<string, unknown> };
+    expect(m.typeUrl).toMatch(/OpenEVMWindow/i);
+    expect(m.value.nativeOnly).toBe(true);
+    expect(String(m.value.maxValue)).toBe(policy.hardDailyUqor);
+  });
+  it("refuses a window with bounds the chain would reject", () => {
+    expect(() => agentWindowMessage(OWNER, policy, { blocks: 999999 })).toThrow();
+  });
+  it("builds a close message", () => {
+    expect(closeAgentWindowMessage(OWNER).typeUrl).toMatch(/CloseEVMWindow/i);
   });
 });
