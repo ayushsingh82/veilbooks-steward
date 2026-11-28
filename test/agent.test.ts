@@ -119,3 +119,30 @@ describe("log of a whole run", () => {
     expect(verifyLog(log.entries, hex(agentKey.publicKey))).toBeNull();
   });
 });
+
+describe("a failing payment layer", () => {
+  it("records a refused payment as rejected and keeps going", async () => {
+    const sent: string[] = [];
+    const exec: Executor = { async pay(i) { if (i.id === "bad") throw new Error("spending limit exceeded"); sent.push(i.id); return { txHash: `TX-${i.id}` }; } };
+    const log = new DecisionLog(agentKey.secretKey);
+    const s = new Steward(signPolicy(policy, owner.secretKey), ownerPk, log, exec, [new RulePlanner()], () => NOW);
+    const r = await s.run([inv("bad", "1000000", 1), inv("good", "1000000", 2)]);
+    expect(sent).toEqual(["good"]);
+    expect(r.rejected[0]?.reasons[0]).toMatch(/payment failed: spending limit exceeded/);
+    expect(s.spent.paid.has("bad")).toBe(false);
+    expect(verifyLog(log.entries, hex(agentKey.publicKey))).toBeNull();
+  });
+  it("keeps an approved invoice in the queue when its payment fails", async () => {
+    let fail = true;
+    const exec: Executor = { async pay(i) { if (fail) throw new Error("chain refused"); return { txHash: `TX-${i.id}` }; } };
+    const s = new Steward(signPolicy(policy, owner.secretKey), ownerPk, new DecisionLog(agentKey.secretKey), exec, [new RulePlanner()], () => NOW);
+    const big = inv("big", "9000000");
+    await s.run([big]);
+    const sig = ownerSig("approve", big);
+    await expect(s.approve("big", sig)).rejects.toThrow(/chain refused/);
+    expect(s.queue.has("big")).toBe(true);
+    fail = false;
+    await s.approve("big", sig);
+    expect(s.queue.has("big")).toBe(false);
+  });
+});

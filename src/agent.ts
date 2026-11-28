@@ -87,7 +87,16 @@ export class Steward {
         continue;
       }
       const d: Decision = decide(inv, this.signed.policy, this.spent);
-      if (d.action === "pay") await this.settle(inv, digest, false, out);
+      if (d.action === "pay") {
+        try {
+          await this.settle(inv, digest, false, out);
+        } catch (e) {
+          // The payment layer (for example the chain's spending rule) refused it. Nothing was paid, so record that and carry on.
+          const reasons = [`payment failed: ${e instanceof Error ? e.message : String(e)}`];
+          this.log.append({ timeUnix: this.now(), invoiceId: inv.id, action: "reject", reasons, policyDigest: digest });
+          out.rejected.push({ invoiceId: inv.id, reasons });
+        }
+      }
       else if (d.action === "escalate") {
         this.log.append({ timeUnix: this.now(), invoiceId: inv.id, action: "escalate", reasons: d.reasons, policyDigest: digest });
         const q = { invoice: inv, reasons: d.reasons };
@@ -112,8 +121,8 @@ export class Steward {
     if (!pqVerify(unhex(this.ownerPublicKeyHex), approvalBytes("approve", q.invoice, digest), unhex(ownerSignatureHex))) throw new Error("bad owner signature on approval");
     const amt = BigInt(q.invoice.amountUqor);
     if (amt > BigInt(this.signed.policy.hardPerInvoiceUqor) || this.spent.today + amt > BigInt(this.signed.policy.hardDailyUqor)) throw new Error("above the chain ceiling");
+    await this.settle(q.invoice, policyDigest(this.signed.policy), true); // if this throws, the invoice stays in the queue
     this.queue.delete(invoiceId);
-    await this.settle(q.invoice, policyDigest(this.signed.policy), true);
   }
 
   deny(invoiceId: string, ownerSignatureHex: string): void {
