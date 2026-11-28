@@ -33,6 +33,8 @@ Steward is an agent that pays supplier invoices. This file lists what it defends
 | Insider or attacker with log access | Replace the log with one signed by another key | Detected | **tested** |
 | Someone linking the agent to the wrong account | Use a link proof made for another owner | Refused | **tested** |
 | Compromised agent | Pay more than the chain ceiling in one transaction | The chain records the execution as failed ("per-tx limit exceeded") and no money moves | **tested on testnet** (see README, Testnet run) |
+| Hostile supplier, end to end | Memo says to ignore limits, plus an unlisted payee and an amount above the ceiling | Memo ignored, payee and amount rejected before any transaction; allowed payments confirmed on chain | **tested on testnet** (`scripts/agent-run.ts`, see README) |
+| Chain refuses a payment the engine allowed | Spending rule or key problem on chain | Logged as rejected, run continues; an approved invoice stays queued | **tested** |
 | Stolen agent key | Keep spending after the owner notices | Owner sends the revoke message, which switches the key off | revoke **ran on testnet**; payments after a revoke not separately tried |
 
 ## Not protected / known limits
@@ -40,7 +42,7 @@ Steward is an agent that pays supplier invoices. This file lists what it defends
 - **Owner key:** if the owner's key is stolen, the attacker can sign any policy. Keep it offline.
 - **Daily totals:** the agent keeps its running total in memory; it resets if the process restarts. The chain's daily limit is the backstop.
 - **Approvals:** the owner is trusted to read what they sign. The page shows invoice, payee and amount.
-- **The browser demo simulates payments.** The on-chain script makes real testnet payments, but it does not run the decision engine first.
+- **The browser demo simulates payments.** `scripts/agent-run.ts` makes real testnet payments with the engine in front, but with a policy key made for that run.
 - **Settlement through Rail** has not been confirmed for linked keys.
 - **Testnet:** all keys and funds are test-only.
 
