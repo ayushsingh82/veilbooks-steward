@@ -5,6 +5,7 @@ import { DecisionLog, verifyLog, type LogEntry } from "../../src/log";
 import { policyDigest, signPolicy, type Policy } from "../../src/policy";
 import { RulePlanner } from "../../src/planner";
 import type { InvoiceToPay } from "../../src/decide";
+import { Footer, Hero, Navbar, Steps } from "./chrome";
 
 const hex = (b: Uint8Array) => Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
 const randomKey = () => pqKeyFromSeed(crypto.getRandomValues(new Uint8Array(32)));
@@ -116,13 +117,34 @@ export function App() {
     setTampered(copy);
   };
 
+  const jump = (id: string) => () => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   return (
-    <main>
-      <h1>Veilbooks Steward</h1>
-      <p className="sub">An agent that pays your invoices and can't go over your limits. This page runs the real policy, decision engine, approvals and signed log in your browser. Payments are simulated, so no funds move.</p>
+    <>
+      <Navbar
+        kind="steward"
+        name="Veilbooks Steward"
+        items={[{ label: "Policy", href: "#policy" }, { label: "Invoices", href: "#invoices" }, { label: "Outcome", href: "#outcome" }, { label: "Log", href: "#log" }]}
+        cta={{ label: "Run the agent", onClick: jump("invoices") }}
+      />
+      <main>
+      <Hero
+        kicker="Accounts payable agent"
+        title="An agent that pays."
+        accent="And can't go over your limits."
+        lead="You sign the limits with a post-quantum key. The agent decides from the numbers alone, never from what a supplier writes, and the chain enforces a hard ceiling even if the agent is compromised."
+        chips={[{ text: "ML-DSA-87 signed policy", hot: true }, { text: "Memos are never read" }, { text: "Owner approves the rest" }, { text: "Simulated payments" }]}
+      />
+      <Steps
+        steps={[
+          { title: "Sign", text: "Set per-invoice, daily and per-supplier limits and the payees you allow." },
+          { title: "Decide", text: "Inside the limits it pays. Over a limit it asks you. Not allowed, it rejects." },
+          { title: "Approve", text: "Your signature is bound to that invoice, payee and amount. It cannot be reused." },
+          { title: "Prove", text: "Every decision goes into a signed, hash-chained log you can check." },
+        ]}
+      />
 
       <div className="grid">
-        <section className="panel">
+        <section className="panel" id="policy">
           <h2>1. Owner policy (signed with ML-DSA-87)</h2>
           <div className="grid">
             <div><label>Agent pays alone, per invoice (QOR)</label><input value={f.perInvoice} onChange={set("perInvoice")} /></div>
@@ -137,7 +159,7 @@ export function App() {
           <p className="note mono">owner key {short(ownerPk)} · agent key {short(agentPk)} (generated in this tab)</p>
         </section>
 
-        <section className="panel">
+        <section className="panel" id="invoices">
           <h2>2. Invoices to pay</h2>
           <textarea value={invoicesText} onChange={(e) => setInvoicesText(e.target.value)} />
           <p className="note">Supplier memos are never read as instructions. Try the last line.</p>
@@ -151,7 +173,7 @@ export function App() {
       {result && (
         <>
           {result.refused && <p className="badtxt">Agent refused to run: {result.refused}</p>}
-          <section className="panel">
+          <section className="panel" id="outcome">
             <h2>3. Outcome</h2>
             <p className="note">Planner: {result.plannerUsed}. Paid today: {qor(String(steward.current?.spent.today ?? 0n))} QOR.</p>
             <table>
@@ -191,7 +213,7 @@ export function App() {
             </section>
           )}
 
-          <section className="panel">
+          <section className="panel" id="log">
             <h2>Signed decision log</h2>
             <p className={verdict ? "badtxt" : "good"}>{verdict ? `Log check failed: ${verdict}` : `Log verified: ${shown.length} entries, hash-chained and signed by the agent key.`}</p>
             <table>
@@ -207,6 +229,16 @@ export function App() {
           </section>
         </>
       )}
-    </main>
+      </main>
+      <Footer
+        kind="steward"
+        name="Veilbooks Steward"
+        blurb="An agent that pays your invoices and can't go over your limits."
+        links={[
+          { title: "Steward", items: [["Policy", "#policy"], ["Invoices", "#invoices"], ["Decision log", "#log"]] },
+          { title: "Docs", items: [["Threat model", "https://github.com/ayushsingh82/veilbooks-steward/blob/main/THREAT_MODEL.md"], ["Testnet run", "https://github.com/ayushsingh82/veilbooks-steward#live-testnet-run"], ["Source", "https://github.com/ayushsingh82/veilbooks-steward"]] },
+        ]}
+      />
+    </>
   );
 }
