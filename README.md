@@ -20,6 +20,10 @@
   <a href="AI_USAGE.md">AI use</a>
 </p>
 
+<p align="center">
+  <img src="docs/screenshot.png" alt="Veilbooks Steward: signed policy, invoices, outcome and decision log" width="880">
+</p>
+
 ---
 
 ## Contents
